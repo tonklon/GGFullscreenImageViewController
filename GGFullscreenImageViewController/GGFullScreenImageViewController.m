@@ -43,6 +43,7 @@ static inline NSInteger RadianDifference(UIInterfaceOrientation from, UIInterfac
 @property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, assign) UIInterfaceOrientation fromOrientation;
 @property (nonatomic, assign) UIInterfaceOrientation toOrientation;
+@property (nonatomic, assign) BOOL ignoreOrientation;
 
 - (void) onDismiss;
 
@@ -55,6 +56,7 @@ static inline NSInteger RadianDifference(UIInterfaceOrientation from, UIInterfac
     if (self) {
         self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
         self.supportedOrientations = UIInterfaceOrientationMaskAll;
+        self.ignoreOrientation = [[[UIDevice currentDevice] systemVersion] compare:@"8.0" options:NSNumericSearch] != NSOrderedAscending;
     }
     return self;
 }
@@ -95,13 +97,12 @@ static inline NSInteger RadianDifference(UIInterfaceOrientation from, UIInterfac
     // imageView configuration
     self.imageView.image = self.liftedImageView.image;
     self.imageView.contentMode = self.liftedImageView.contentMode;
-    self.imageView.clipsToBounds = self.liftedImageView.clipsToBounds;
 
     CGRect startFrame = [self.liftedImageView convertRect:self.liftedImageView.bounds toView:window];
     self.imageView.layer.position = CGPointMake(startFrame.origin.x + floorf(startFrame.size.width/2), startFrame.origin.y + floorf(startFrame.size.height/2));
     
     UIInterfaceOrientation orientation = self.presentingViewController.interfaceOrientation;
-    if (UIInterfaceOrientationIsPortrait(orientation)) {
+    if (UIInterfaceOrientationIsPortrait(orientation) || self.ignoreOrientation) {
         self.imageView.layer.bounds = CGRectMake(0, 0, startFrame.size.width, startFrame.size.height);
     } else {
         self.imageView.layer.bounds = CGRectMake(0, 0, startFrame.size.height, startFrame.size.width);
@@ -114,6 +115,10 @@ static inline NSInteger RadianDifference(UIInterfaceOrientation from, UIInterfac
     } else if (orientation == UIInterfaceOrientationLandscapeRight) {
         self.imageView.layer.transform = CATransform3DMakeRotation(M_PI_2, 0, 0, 1);
     } else {
+        self.imageView.layer.transform = CATransform3DIdentity;
+    }
+
+    if (self.ignoreOrientation) {
         self.imageView.layer.transform = CATransform3DIdentity;
     }
 
@@ -147,7 +152,7 @@ static inline NSInteger RadianDifference(UIInterfaceOrientation from, UIInterfac
     CGSize imageSize = self.liftedImageView.image.size;
     CGFloat maxHeight = 0;
     CGFloat maxWidth = 0;
-    if (UIInterfaceOrientationIsPortrait(to)) {
+    if (UIInterfaceOrientationIsPortrait(to) || self.ignoreOrientation) {
         // 570/323 = 320/y
         maxHeight = MIN(endFrame.size.height,endFrame.size.width*imageSize.height/imageSize.width);
         maxWidth = MIN(endFrame.size.width, endFrame.size.height*imageSize.width/imageSize.height);
@@ -189,7 +194,7 @@ static inline NSInteger RadianDifference(UIInterfaceOrientation from, UIInterfac
 
     UIInterfaceOrientation orientation = self.interfaceOrientation;
     
-    if (UIInterfaceOrientationIsPortrait(orientation)) {
+    if (UIInterfaceOrientationIsPortrait(orientation) || self.ignoreOrientation) {
         self.imageView.layer.bounds = CGRectMake(0, 0, startFrame.size.width, startFrame.size.height);
     } else {
         self.imageView.layer.bounds = CGRectMake(0, 0, startFrame.size.height, startFrame.size.width);
@@ -202,6 +207,10 @@ static inline NSInteger RadianDifference(UIInterfaceOrientation from, UIInterfac
     } else if (orientation == UIInterfaceOrientationLandscapeRight) {
         self.imageView.layer.transform = CATransform3DMakeRotation(M_PI_2, 0, 0, 1);
     } else {
+        self.imageView.layer.transform = CATransform3DIdentity;
+    }
+
+    if (self.ignoreOrientation) {
         self.imageView.layer.transform = CATransform3DIdentity;
     }
 
@@ -231,7 +240,7 @@ static inline NSInteger RadianDifference(UIInterfaceOrientation from, UIInterfac
     UIInterfaceOrientation from = self.fromOrientation;
     UIInterfaceOrientation to = self.toOrientation;
 
-    if (UIInterfaceOrientationIsPortrait(to)) {
+    if (UIInterfaceOrientationIsPortrait(to) || self.ignoreOrientation) {
         scale.toValue = [NSValue valueWithCGRect:CGRectMake(0, 0, endFrame.size.width, endFrame.size.height)];
     } else {
         scale.toValue = [NSValue valueWithCGRect:CGRectMake(0, 0, endFrame.size.height, endFrame.size.width)];
